@@ -1,0 +1,6 @@
+[postgresql]
+database = sshkey
+user = EDITTHIS 
+password = EDITTHIS
+host = localhost
+port = 5432
