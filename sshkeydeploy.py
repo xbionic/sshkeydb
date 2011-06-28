@@ -24,6 +24,8 @@ import hashlib
 import psycopg2
 import ConfigParser
 
+# check if the configfile exists, else create one
+
 checkconf = os.path.exists(os.path.expanduser('~/.sshkeydb.conf'))
 
 if checkconf == False:
@@ -38,14 +40,17 @@ if checkconf == False:
         config.write(configfile)
     sys.exit("Edit your configfile now")
 
-config = ConfigParser.ConfigParser()
+# parse config
 
+config = ConfigParser.ConfigParser()
 config.read([os.path.expanduser('~/.sshkeydb.conf')])
 databasename=config.get('postgresql','database')
 dbuser=config.get('postgresql','user')
 dbhost=config.get('postgresql','host')
 dbpass=config.get('postgresql','password')
 dbport=config.get('postgresql','port')
+
+# create the connection string
 
 connectingString = "dbname=%s user=%s password=%s host=%s" % (databasename, dbuser, dbpass, dbhost)
 
@@ -86,18 +91,20 @@ else:
     parser.add_argument('--role', '-r', dest='role', help='Role of the user (default: admin)', default='admin')
     parser.add_argument('--realname' '-R', dest='realname', help="Name of the key owner", default='')
     args = parser.parse_args()
+    keypath=args.keytossh
+    theRole=args.role
+    theName=args.realname
+
 #Check if the key exists, make a checksum and read it
 
 try:
+    print keypath
     keyssh = open(keypath, 'r')
-    keychecksum = hashlib.md5(open(options.keytossh, "rb").read()).hexdigest()
     readFile=keyssh.read()
+    keychecksum = hashlib.sha256(readFile).hexdigest()
 except IOError:
-    print "File not found in %s", keypath
+    print "File not found in %s" % keypath
     sys.exit("File not found")
-
-# some Vars
-users = ({"key":readFile, "role": options.role, "keySum":keychecksum, "path": keypath, "Ownerm": theName})
 
 # check if the key exists in the database
 #checkIfExists = "select keyfile from users where keyfile='%(key)s'" % users
