@@ -23,7 +23,6 @@ import os
 import hashlib
 import psycopg2
 import ConfigParser
-import tempfile
 
 # check if the configfile exists, else create one
 

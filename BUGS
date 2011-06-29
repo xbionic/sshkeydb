@@ -1,1 +1,1 @@
-Currently exists no check for duplicate keys in the authorized_keys2 file.
+Currently exists no check for duplicate keys in the authorized_keys2 file. (working on a solution)
