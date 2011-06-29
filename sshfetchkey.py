@@ -69,19 +69,32 @@ else:
 
 # Connecting section
 
-connectingString = "dbname=%s user=%s password=%s host=%s" % (databasename, dbuser, dbpass, dbhost)
+def connect():
+    try:
+        connectingString = "dbname=%s user=%s password=%s host=%s" % (databasename, dbuser, dbpass, dbhost)
+        conn = psycopg2.connect(connectingString);
+    except psycopg2.OperationalError:
+        print "Could not connect to the server"
+        sys.exit("ConnectionError")
 
-try:
-    conn = psycopg2.connect(connectingString);
-except psycopg2.OperationalError:
-    print "Could not connect to the server"
-    sys.exit("ConnectionError")
+    try:
+        getRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
+        cursor = conn.cursor()
+        cursor.execute(getRole)
+        myresults = cursor.fetchall()
+        for key in myresults:
+            getKey=key[2]
+            keychecksum = hashlib.sha256(getKey).hexdigest()
+            if key[4] == keychecksum:
+                print "Checksum ok"
+            else:
+                print "Checksum is different"
+                sys.exit("Aborting")
 
-getRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
-cursor = conn.cursor()
-cursor.execute(getRole)
-myresults = cursor.fetchall()
-for key in myresults:
-    getKey=key[2]
-    keychecksum = hashlib.sha256(getKey).hexdigest()
-    print "%s %s" % (key[4], keychecksum)
+            auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'a')
+            auth.write(key[2])
+            auth.close()
+    except:
+        print "Database Error"
+
+connect()
