@@ -23,45 +23,17 @@ import os
 import hashlib
 import psycopg2
 import ConfigParser
+import argparse
+import sshdb
 
 # check if the configfile exists, else create one
+sshdb.configCheck()
 
-checkconf = os.path.exists(os.path.expanduser('~/.sshkeydb.conf'))
+# parse config und connect
 
-if checkconf == False:
-    print "Configfile not found create a defaultconf"
-    config = ConfigParser.RawConfigParser()
-    config.add_section('postgresql')
-    config.set('postgresql', 'user', os.getenv('USER'))
-    config.set('postgresql', 'pass', 'EDITTHIS')
-    config.set('postgresql', 'host', 'localhost')
-    config.set('postgresql', 'port', '5432')
-    with open(os.path.expanduser('~/.sshkeydb.conf'), 'wb') as configfile:
-        config.write(configfile)
-    sys.exit("Edit your configfile now")
+connectingString = sshdb.parseConfig()
 
-# parse config
-
-config = ConfigParser.ConfigParser()
-config.read([os.path.expanduser('~/.sshkeydb.conf')])
-databasename=config.get('postgresql','database')
-dbuser=config.get('postgresql','user')
-dbhost=config.get('postgresql','host')
-dbpass=config.get('postgresql','password')
-dbport=config.get('postgresql','port')
-
-# create the connection string
-
-connectingString = "dbname=%s user=%s password=%s host=%s" % (databasename, dbuser, dbpass, dbhost)
-
-# Connecting section
-try:
-    conn = psycopg2.connect(connectingString);
-
-except psycopg2.OperationalError:
-    print "Could not connect to the server" 
-    sys.exit("ConnectionError")
-
+conn = sshdb.connectDB(connectingString)
 
 # Searching for the ssh key using the default keys
 
@@ -70,58 +42,38 @@ try:
 except:
     keypath=os.path.expanduser('~/.ssh/id_dsa.pub')
 
-# Version switch optparse exists only from Python V2.3 to 2.6
-
-if sys.version_info < (2, 7):
-    from optparse import OptionParser
-    parser = OptionParser()
-    parser.add_option('--key', '-k', dest='keytossh', help='Path to the Key (default: ~/.ssh/id_dsa.pub)', default=keypath)
-    parser.add_option('--role', '-r', dest='role', help='Role of the user (default: admin)', default='admin')
-    parser.add_option('--realname', '-R', dest='realname', help="Name of the key owner", default='')
-    (options, args) = parser.parse_args()
-    keypath=options.keytossh
-    theRole=options.role
-    theName=options.realname
-# Python 2.7 and above
-else: 
-    print "using argparse"
-    import argparse
+try:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--key', '-k', dest='keytossh', help='Path to the Key (default: ~/.ssh/id_dsa.pub)', default=keypath)
+    parser.add_argument('--key', '-k', dest='keytossh', help='Path to the Key (default: ~/.ssh/id_rsa.pub)', default=keypath)
     parser.add_argument('--role', '-r', dest='role', help='Role of the user (default: admin)', default='admin')
-    parser.add_argument('--realname' '-R', dest='realname', help="Name of the key owner", default='')
+    parser.add_argument('--realname', '-R', dest='realname', help='Name of the key owner', default='')
     args = parser.parse_args()
     keypath=args.keytossh
     theRole=args.role
     theName=args.realname
+except:
+    sys.exit("Wrong commandline arguments")
 
 #Check if the key exists, make a checksum and read it
 
-try:
-    print keypath
-    keyssh = open(keypath, 'r')
-    readFile=keyssh.read()
-    keychecksum = hashlib.sha256(readFile).hexdigest()
-except IOError:
-    print "File not found in %s" % keypath
-    sys.exit("File not found")
+hashSHA256=sshdb.createSHA256(keypath)
 
-# check if the key exists in the database
-#checkIfExists = "select keyfile from users where keyfile='%(key)s'" % users
+(checksum, sshfile)= hashSHA256
 
+cursor = conn.cursor
+users = ({"key":sshfile, "role": theRole, "keySum":checksum, "path": keypath, "realname": theName})
 
-cursor = conn.cursor()
+sshdb.executeQuery(conn, users)
 
 # Database stuff if key not exists insert, else close the db-connection and make a clean exit
-try:
-    users = ({"key":readFile, "role": options.role, "keySum":keychecksum, "path": keypath, "realname": theName})
-    myQuery = "insert into users values ('%(key)s', '%(role)s', '%(keySum)s', '%(path)s', '%(realname)s')" % users
-    cursor.execute(myQuery)
-    conn.commit()
-    print "Commited key successful in the database"
-except psycopg2.IntegrityError:
-    print "SSH-key exists in the database"
-    conn.close()
-    sys.exit()
+#try:
+#    myQuery = "insert into users values ('%(key)s', '%(role)s', '%(keySum)s', '%(path)s', '%(realname)s')" % users
+#    cursor.execute(myQuery)
+#    conn.commit()
+#    print "Commited key successful in the database"
+#except psycopg2.IntegrityError:
+#    print "SSH-key exists in the database"
+#    conn.close()
+#    sys.exit()
 
 conn.close()
