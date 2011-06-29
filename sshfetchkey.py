@@ -23,77 +23,53 @@ import os
 import hashlib
 import psycopg2
 import ConfigParser
+import sshdb
+import argparse
 
-# check if the configfile exists, else create one
 
-checkconf = os.path.exists(os.path.expanduser('~/.sshkeydb.conf'))
+# same stuff as in sshkeydeploy.py
+sshdb.configCheck()
+connectingString = sshdb.parseConfig()
+conn = sshdb.connectDB(connectingString)
 
-if checkconf == False:
-    print "Configfile not found create a defaultconf"
-    config = ConfigParser.RawConfigParser()
-    config.add_section('postgresql')
-    config.set('postgresql', 'user', os.getenv('USER'))
-    config.set('postgresql', 'pass', 'EDITTHIS')
-    config.set('postgresql', 'host', 'localhost')
-    config.set('postgresql', 'port', '5432')
-    with open(os.path.expanduser('~/.sshkeydb.conf'), 'wb') as configfile:
-        config.write(configfile)
-    sys.exit("Edit your configfile now")
-
-# parse config
-
-config = ConfigParser.ConfigParser()
-config.read([os.path.expanduser('~/.sshkeydb.conf')])
-databasename=config.get('postgresql','database')
-dbuser=config.get('postgresql','user')
-dbhost=config.get('postgresql','host')
-dbpass=config.get('postgresql','password')
-dbport=config.get('postgresql','port')
-
-if sys.version_info < (2, 7):
-    from optparse import OptionParser
-    parser = OptionParser()
-    parser.add_option('--role', '-r', dest='role', help='Which usergroup do you want', default='')
-    (options, args) = parser.parse_args()
-    theRole=options.role
-# Python 2.7 and above
-else:
-    print "using argparse"
-    import argparse
+try:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--role', '-r', dest='role', help='Which usergroup do you want', default='')
+    parser.add_argument('--role', '-r', dest='role', help='Role of the user (default: admin)', default='admin')
+    parser.add_argument('--realname', '-R', dest='realname', help='Name of the key owner', default='')
     args = parser.parse_args()
     theRole=args.role
+    theName=args.realname
+except:
+    sys.exit("Wrong commandline arguments")
 
+#fetchedQuery = sshdb.fQuery(conn, getRole)
+#sshdb.isKeyPresent(fetchedQuery)
+#for key in fetchedQuery:
+#    dbkey=sshdb.hashCheck(key[2])
+#    if dbkey == key[4]:
+#        auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'a')
+#        for key in auth:
+#            if key == key[
+#    else:
+#        print("Key corrupted")
+#        sys.exit("Aborted")
 
-# Connecting section
+try:
+    getRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
+    cursor = conn.cursor()
+    cursor.execute(getRole)
+    myresults = cursor.fetchall()
+    for key in myresults:
+        getKey=key[2]
+        keychecksum = hashlib.sha256(getKey).hexdigest()
+        if key[4] == keychecksum:
+            print "Checksum ok"
+        else:
+            print "Checksum is different"
+            sys.exit("Aborting")
 
-def connect():
-    try:
-        connectingString = "dbname=%s user=%s password=%s host=%s" % (databasename, dbuser, dbpass, dbhost)
-        conn = psycopg2.connect(connectingString);
-    except psycopg2.OperationalError:
-        print "Could not connect to the server"
-        sys.exit("ConnectionError")
-
-    try:
-        getRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
-        cursor = conn.cursor()
-        cursor.execute(getRole)
-        myresults = cursor.fetchall()
-        for key in myresults:
-            getKey=key[2]
-            keychecksum = hashlib.sha256(getKey).hexdigest()
-            if key[4] == keychecksum:
-                print "Checksum ok"
-            else:
-                print "Checksum is different"
-                sys.exit("Aborting")
-
-            auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'a')
-            auth.write(key[2])
-            auth.close()
-    except:
-        print "Database Error"
-
-connect()
+        auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'a')
+        auth.write(key[2])
+        auth.close()
+except:
+    print "Database Error"

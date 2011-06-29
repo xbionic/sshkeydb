@@ -63,17 +63,6 @@ hashSHA256=sshdb.createSHA256(keypath)
 cursor = conn.cursor
 users = ({"key":sshfile, "role": theRole, "keySum":checksum, "path": keypath, "realname": theName})
 
-sshdb.executeQuery(conn, users)
-
-# Database stuff if key not exists insert, else close the db-connection and make a clean exit
-#try:
-#    myQuery = "insert into users values ('%(key)s', '%(role)s', '%(keySum)s', '%(path)s', '%(realname)s')" % users
-#    cursor.execute(myQuery)
-#    conn.commit()
-#    print "Commited key successful in the database"
-#except psycopg2.IntegrityError:
-#    print "SSH-key exists in the database"
-#    conn.close()
-#    sys.exit()
+sshdb.iQuery(conn, users)
 
 conn.close()

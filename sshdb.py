@@ -36,7 +36,7 @@ def connectDB(connectingString):
                 conn = psycopg2.connect(connectingString);
                 return conn 
         except psycopg2.OperationalError:
-                print "Could not connect to the server"
+                print("Could not connect to the server"),
                 sys.exit("ConnectionError")
 
 def createSHA256(n):
@@ -44,20 +44,33 @@ def createSHA256(n):
         keyssh = open(n, 'r')
         readFile=keyssh.read()
         keychecksum = hashlib.sha256(readFile).hexdigest()
+        print keychecksum
         return keychecksum, readFile
     except IOError:
-        print "File not found in %s" % n 
+        print("File not found in %s") % n 
         sys.exit("File not found")
         
-def executeQuery(conn, users):
+def iQuery(conn, users):
 # Database stuff if key not exists insert, else close the db-connection and make a clean exit
     cursor = conn.cursor()
     try:
         myQuery = "insert into users values ('%(key)s', '%(role)s', '%(keySum)s', '%(path)s', '%(realname)s')" % users
         cursor.execute(myQuery)
         conn.commit()
-        print "Commited key successful in the database"
+        print("Commited key successful in the database"),
     except psycopg2.IntegrityError:
-        print "SSH-key exists in the database"
+        print("SSH-key exists in the database"),
         conn.close()
     sys.exit()
+
+
+def fQuery(conn, getRole):
+    cursor = conn.cursor()
+    cursor.execute(getRole)
+    myresults = cursor.fetchall()
+    return myresults
+
+def hashCheck(readFile):
+    hashMe = keychecksum = hashlib.sha256(readFile).hexdigest()
+    return hashMe
+
