@@ -31,14 +31,15 @@ import sshdb
 def main():
     configPresent=sshdb.configCheck()
     if configPresent != 0:
-        sys.exit("No configfilefound")
+        sys.exit("No configfile found, please use sshdbconfig.py to create a default config")
+
     # parse config und connect
     connectingString = sshdb.parseConfig()
     if connectingString == 1:
         sys.exit("Please edit your configfile")
     conn = sshdb.connectDB(connectingString)
 
-# Searching for the ssh key using the default keys
+    # Searching for the ssh key using the default keys
 
     try:
         keyExists=os.path.exists(os.path.expanduser('~/.ssh/id_rsa.pub'))
@@ -60,9 +61,9 @@ def main():
     except:
         sys.exit("Wrong commandline arguments")
 
-#Check if the key exists, make a checksum and read it
+    #Check if the key exists, make a checksum and read it
 
-    hashSHA256=sshdb.createSHA256(keypath)
+    hashSHA256=sshdb.makeSHA256Hash(keypath)
     (checksum, sshfile)= hashSHA256
     cursor = conn.cursor
     users = ({"key":sshfile, "role": theRole, "keySum":checksum, "path": keypath, "realname": theName})
@@ -72,6 +73,7 @@ def main():
     elif queryReturnCode == 42:
         sys.stdout.write("SSH-key exists in the database\n")
     conn.close()
+    sys.exit("Goodbye")
 
 if __name__ == '__main__':
             main()

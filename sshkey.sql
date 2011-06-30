@@ -13,7 +13,7 @@ SET escape_string_warning = off;
 -- Name: sshkey; Type: DATABASE; Schema: -; Owner: -
 --
 
-CREATE DATABASE sshkey WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_IE.UTF-8' LC_CTYPE = 'en_IE.UTF-8';
+CREATE DATABASE sshkey; 
 
 
 \connect sshkey

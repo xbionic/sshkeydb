@@ -26,42 +26,34 @@ import ConfigParser
 import sshdb
 import argparse
 
+def main():
+    configPresent=sshdb.configCheck()
+    if configPresent != 0:
+        sys.exit("No configfile found, please use sshdbconfig.py to create a default config")
+    # parse config und connect
+    connectingString = sshdb.parseConfig()
+    if connectingString == 1:
+        sys.exit("Please edit your configfile")
+    conn = sshdb.connectDB(connectingString)
 
-# same stuff as in sshkeydeploy.py
-sshdb.configCheck()
-connectingString = sshdb.parseConfig()
-conn = sshdb.connectDB(connectingString)
+    try:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--role', '-r', dest='role', help='Role of the user (default: admin)', default='admin')
+        parser.add_argument('--realname', '-R', dest='realname', help='Name of the key owner', default='')
+        args = parser.parse_args()
+        theRole=args.role
+        theName=args.realname
+    except:
+        sys.exit("Wrong commandline arguments")
 
-try:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--role', '-r', dest='role', help='Role of the user (default: admin)', default='admin')
-    parser.add_argument('--realname', '-R', dest='realname', help='Name of the key owner', default='')
-    args = parser.parse_args()
-    theRole=args.role
-    theName=args.realname
-except:
-    sys.exit("Wrong commandline arguments")
-
-#fetchedQuery = sshdb.fQuery(conn, getRole)
-#sshdb.isKeyPresent(fetchedQuery)
-#for key in fetchedQuery:
-#    dbkey=sshdb.hashCheck(key[2])
-#    if dbkey == key[4]:
-#        auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'a')
-#        for key in auth:
-#            if key == key[
-#    else:
-#        print("Key corrupted")
-#        sys.exit("Aborted")
-
-try:
-    getRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
-    cursor = conn.cursor()
-    cursor.execute(getRole)
-    myresults = cursor.fetchall()
-    for key in myresults:
-        getKey=key[2]
-        keychecksum = hashlib.sha256(getKey).hexdigest()
+    try:
+        getRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
+        cursor = conn.cursor()
+        cursor.execute(getRole)
+        myresults = cursor.fetchall()
+        for key in myresults:
+            getKey=key[2]
+            keychecksum = hashlib.sha256(getKey).hexdigest()
         if key[4] == keychecksum:
             print "Checksum ok"
         else:
@@ -71,5 +63,9 @@ try:
         auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'a')
         auth.write(key[2])
         auth.close()
-except:
-    print "Database Error"
+    except:
+        print "Database Error"
+    sys.exit()
+
+if __name__ == '__main__':
+    main()
