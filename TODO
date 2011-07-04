@@ -1,5 +1,5 @@
 need auth for the deployment
-use a configfile
+use a configfile (done)
 use classes for the single tasks
-write a client for the database to retrieve keys and add them to the auth-file
+write a client for the database to retrieve keys and add them to the auth-file (done)
 more database support like noSQL (mongodb, couchdb) and SQL(mySQL, postgreSQL)

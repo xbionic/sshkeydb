@@ -45,24 +45,30 @@ def main():
         theName=args.realname
     except:
         sys.exit("Wrong commandline arguments")
-
+    
     try:
+        keyList=sshdb.genList()
         getRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
         cursor = conn.cursor()
         cursor.execute(getRole)
         myresults = cursor.fetchall()
         for key in myresults:
             getKey=key[2]
-            keychecksum = hashlib.sha256(getKey).hexdigest()
-        if key[4] == keychecksum:
-            print "Checksum ok"
-        else:
-            print "Checksum is different"
-            sys.exit("Aborting")
-
-        auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'a')
-        auth.write(key[2])
-        auth.close()
+            try:
+                foo=keyList.index(key[2])
+            except ValueError:
+                keychecksum = hashlib.sha256(getKey).hexdigest()
+                if key[4] == keychecksum:
+                    print "Checksum ok"
+                else:
+                    print "Checksum is different"
+                    sys.exit("Aborting")
+                auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'a')
+                auth.write(key[2])
+                auth.close()
+                print "here we go"
+            except:
+                pass
     except:
         print "Database Error"
     sys.exit()
