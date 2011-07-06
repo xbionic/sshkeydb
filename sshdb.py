@@ -23,8 +23,15 @@ import hashlib
 import sys
 import os
 import psycopg2
+import re
 
+def __init__(self):
+    self.data = []
 def configCheck():
+    """ Checks if the configfile ist present
+    Returns 1 if not present
+    Returns 0 if present
+    """
     config = ConfigParser.RawConfigParser()
     checkconf = os.path.exists(os.path.expanduser('~/.sshkeydb.conf'))
     if checkconf == False:
@@ -32,41 +39,44 @@ def configCheck():
         return 1
     else:
         return 0
-#        config.add_section('postgresql')
-#        config.set('postgresql', 'database', 'sshkey')
-#        config.set('postgresql', 'user', os.getenv('USER'))
-#        config.set('postgresql', 'password', 'EDITTHIS')
-#        config.set('postgresql', 'host', 'localhost')
-#        config.set('postgresql', 'port', '5432')
-#        with open(os.path.expanduser('~/.sshkeydb.conf'), 'wb') as configfile:
-#            config.write(configfile)
-#        sys.exit("Edit your configfile now")
 
 def parseConfig():
+    """ 
+    Returns a connectionstring or 
+    if the keyword EDITTHIS is found a 1
+    """
     config = ConfigParser.RawConfigParser()
     config.read([os.path.expanduser('~/.sshkeydb.conf')])
     databasename=config.get('postgresql','database')
-    dbuser=config.get('postgresql','user')
-    dbhost=config.get('postgresql','host')
-    dbpass=config.get('postgresql','password')
-    dbport=config.get('postgresql','port')
+    dbuser = config.get('postgresql','user')
+    dbhost = config.get('postgresql','host')
+    dbpass = config.get('postgresql','password')
+    dbport = config.get('postgresql','port')
     if dbpass == 'EDITTHIS':
         return 1
     connectingString = "dbname=%s user=%s password=%s host=%s port=5432" % (databasename, dbuser, dbpass, dbhost)
     return connectingString
 
 def connectDB(connectingString):
-        try:
-                conn = psycopg2.connect(connectingString);
-                return conn 
-        except psycopg2.OperationalError:
-                print("Could not connect to the server"),
-                return 42
+    """
+    Returns a connection object or
+    1 if the connecting fails
+    """
+    try:
+        conn = psycopg2.connect(connectingString);
+        return conn 
+    except psycopg2.OperationalError:
+        print("Could not connect to the server"),
+        return 1
 
-def createSHA256(n):
+def makeSHA256Hash(n):
+    """
+    makeSHA256Hash(fileLocation) 
+    Returns a SHA256 hash of the file and a string
+    """
     try:
         keyssh = open(n, 'r')
-        readFile=keyssh.read()
+        readFile = keyssh.read()
         keychecksum = hashlib.sha256(readFile).hexdigest()
         return keychecksum, readFile
     except IOError:
@@ -74,30 +84,38 @@ def createSHA256(n):
         return 1
          
 def insertQuery(conn, users):
-    # Database stuff if key not exists insert, else close the db-connection and make a clean exit
+    """
+    Need 2 arguments a connectionobject and a dict
+    """
     cursor = conn.cursor()
     try:
         myQuery = "insert into users values ('%(key)s', '%(role)s', '%(keySum)s', '%(path)s', '%(realname)s')" % users
         cursor.execute(myQuery)
         conn.commit()
-        sys.stdout.write("Commited key successful in the database")
         return 0
     except psycopg2.IntegrityError:
-        print("SSH-key exists in the database"),
         return 42
 
-def fQuery(conn, getRole):
+def getRoles(conn, getRole):
+    """ Needs a connection object and a role(e.g. admin) """
     cursor = conn.cursor()
     cursor.execute(getRole)
     myresults = cursor.fetchall()
     return myresults
 
 def hashCheck(readFile):
-    hashMe = hashlib.sha256(readFile).hexdigest()
-    return hashMe
+    """
+    Expects as argument a string
+    Returns a sha256 hash
+    """
+    keysum = hashlib.sha256(readFile).hexdigest()
+    return keysum
 
 def genList():
-    auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'ra')
+    """
+    Returns a list of keys 
+    """
+    auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'r')
     n=[]
     for i in auth:
         n.append(i)
@@ -105,6 +123,7 @@ def genList():
     return n
 
 def createConfigFile():
+    """ Creates a default config file ~/.sshkeydb.conf """
     config = ConfigParser.RawConfigParser()
     config.add_section('postgresql')
     config.set('postgresql', 'database', 'sshkey')
@@ -112,9 +131,21 @@ def createConfigFile():
     config.set('postgresql', 'password', 'EDITTHIS')
     config.set('postgresql', 'host', 'localhost')
     config.set('postgresql', 'port', '5432')
-    with open(os.path.expanduser('~/.sshkeydb.conf'), 'wb') as configfile:
-        config.write(configfile)
-    return 0
+    try:
+        with open(os.path.expanduser('~/.sshkeydb.conf'), 'wb') as configfile:
+            config.write(configfile)
+        return 0
+    except:
+        print("Cannot write the defaultconfig")
+        return 1
 
-if __name__ == '__main__':
-        main()
+def isPublicKey(key):
+    """ 
+    Checking the string on the pattern ssh-rsa and ssh-dsa on success the function return a zero
+    """
+    matchkey = re.search('^ssh-(rsa|dsa)', key)
+    if matchkey == None:
+        return 1 
+    else:
+        return 0
+
