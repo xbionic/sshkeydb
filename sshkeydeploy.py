@@ -61,8 +61,15 @@ def main():
     except:
         sys.exit("Wrong commandline arguments")
 
-    #Check if the key exists, make a checksum and read it
+    
+    checkKey = sshdb.isPublicKey(keypath)
+    
+    if checkKey == 0:
+        print "Key is OK"
+    else:
+        sys.exit("Key is no SSH-Key. I am stopping here")
 
+    #Check if the key exists, make a checksum and read it
     hashSHA256=sshdb.makeSHA256Hash(keypath)
     (checksum, sshfile)= hashSHA256
     cursor = conn.cursor

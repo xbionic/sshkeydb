@@ -48,9 +48,13 @@ def main():
     
     try:
         keyList=sshdb.genList()
-        getRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
         cursor = conn.cursor()
-        cursor.execute(getRole)
+        if theName == '':
+            getByRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
+            cursor.execute(getByRole)
+        else:
+            getByName = "select role, realname, keyfile, keypath, checksum from users where realname='%s'" % theName
+            cursor.execute(getByName)
         myresults = cursor.fetchall()
         for key in myresults:
             getKey=key[2]
@@ -71,6 +75,7 @@ def main():
                 pass
     except:
         print "Database Error"
+    conn.close()
     sys.exit()
 
 if __name__ == '__main__':

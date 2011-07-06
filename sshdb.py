@@ -139,13 +139,14 @@ def createConfigFile():
         print("Cannot write the defaultconfig")
         return 1
 
-def isPublicKey(key):
+def isPublicKey(keypath):
     """ 
     Checking the string on the pattern ssh-rsa and ssh-dsa on success the function return a zero
     """
-    matchkey = re.search('^ssh-(rsa|dsa)', key)
+    key = open(keypath, 'r')
+    readFile = key.read()
+    matchkey = re.search('^ssh-(rsa|dsa)', readFile)
     if matchkey == None:
-        return 1 
+        return 1
     else:
         return 0
-
