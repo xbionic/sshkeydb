@@ -26,10 +26,12 @@ import ConfigParser
 import sshdb
 import argparse
 
+
 def main():
-    configPresent=sshdb.configCheck()
+    configPresent = sshdb.configCheck()
     if configPresent != 0:
-        sys.exit("No configfile found, please use sshdbconfig.py to create a default config")
+        sys.exit("No configfile found, please use
+        sshdbconfig.py to create a default config")
     # parse config und connect
     connectingString = sshdb.parseConfig()
     if connectingString == 1:
@@ -38,28 +40,32 @@ def main():
 
     try:
         parser = argparse.ArgumentParser()
-        parser.add_argument('--role', '-r', dest='role', help='Role of the user (default: admin)', default='admin')
-        parser.add_argument('--realname', '-R', dest='realname', help='Name of the key owner', default='')
+        parser.add_argument('--role', '-r', dest='role',
+        help='Role of the user (default: admin)', default='admin')
+        parser.add_argument('--realname', '-R', dest='realname',
+        help='Name of the key owner', default='')
         args = parser.parse_args()
-        theRole=args.role
-        theName=args.realname
+        theRole = args.role
+        theName = args.realname
     except:
         sys.exit("Wrong commandline arguments")
-    
+
     try:
-        keyList=sshdb.genList()
+        keyList = sshdb.genList()
         cursor = conn.cursor()
         if theName == '':
-            getByRole = "select role, realname, keyfile, keypath, checksum from users where role='%s'" % theRole
+            getByRole = "select role, realname, keyfile, keypath,
+            checksum from users where role = '%s'" % theRole
             cursor.execute(getByRole)
         else:
-            getByName = "select role, realname, keyfile, keypath, checksum from users where realname='%s'" % theName
+            getByName = "select role, realname, keyfile, keypath,
+            checksum from users where realname = '%s'" % theName
             cursor.execute(getByName)
         myresults = cursor.fetchall()
         for key in myresults:
-            getKey=key[2]
+            getKey = key[2]
             try:
-                foo=keyList.index(key[2])
+                foo = keyList.index(key[2])
             except ValueError:
                 keychecksum = hashlib.sha256(getKey).hexdigest()
                 if key[4] == keychecksum:

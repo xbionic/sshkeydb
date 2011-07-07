@@ -26,12 +26,12 @@ import ConfigParser
 import argparse
 import sshdb
 
-# check if the configfile exists
 
 def main():
-    configPresent=sshdb.configCheck()
+    configPresent = sshdb.configCheck()
     if configPresent != 0:
-        sys.exit("No configfile found, please use sshdbconfig.py to create a default config")
+        sys.exit("No configfile found, please use sshdbconfig.py
+        to create a default config")
 
     # parse config und connect
     connectingString = sshdb.parseConfig()
@@ -42,39 +42,42 @@ def main():
     # Searching for the ssh key using the default keys
 
     try:
-        keyExists=os.path.exists(os.path.expanduser('~/.ssh/id_rsa.pub'))
+        keyExists = os.path.exists(os.path.expanduser('~/.ssh/id_rsa.pub'))
         if keyExists == True:
-            keypath=os.path.expanduser('~/.ssh/id_rsa.pub')
+            keypath = os.path.expanduser('~/.ssh/id_rsa.pub')
     except:
-        keyExists=os.path.exists(os.path.expanduser('~/.ssh/id_dsa.pub'))
+        keyExists = os.path.exists(os.path.expanduser('~/.ssh/id_dsa.pub'))
         if keyExists == True:
-                        keypath=os.path.expanduser('~/.ssh/id_rsa.pub')
+            keypath = os.path.expanduser('~/.ssh/id_rsa.pub')
     try:
         parser = argparse.ArgumentParser()
-        parser.add_argument('--key', '-k', dest='keytossh', help='Path to the Key (default: ~/.ssh/id_rsa.pub)', default=keypath)
-        parser.add_argument('--role', '-r', dest='role', help='Role of the user (default: admin)', default='admin')
-        parser.add_argument('--realname', '-R', dest='realname', help='Name of the key owner', default='')
+        parser.add_argument('--key', '-k', dest='keytossh',
+        help='Path to the Key (default: ~/.ssh/id_rsa.pub)', default=keypath)
+        parser.add_argument('--role', '-r', dest='role',
+        help='Role of the user (default: admin)', default='admin')
+        parser.add_argument('--realname', '-R', dest='realname',
+        help='Name of the key owner', default='')
         args = parser.parse_args()
-        keypath=args.keytossh
-        theRole=args.role
-        theName=args.realname
+        keypath = args.keytossh
+        theRole = args.role
+        theName = args.realname
     except:
         sys.exit("Wrong commandline arguments")
 
-    
     checkKey = sshdb.isPublicKey(keypath)
-    
+
     if checkKey == 0:
         print "Key is OK"
     else:
         sys.exit("Key is no SSH-Key. I am stopping here")
 
     #Check if the key exists, make a checksum and read it
-    hashSHA256=sshdb.makeSHA256Hash(keypath)
-    (checksum, sshfile)= hashSHA256
+    hashSHA256 = sshdb.makeSHA256Hash(keypath)
+    (checksum, sshfile) = hashSHA256
     cursor = conn.cursor
-    users = ({"key":sshfile, "role": theRole, "keySum":checksum, "path": keypath, "realname": theName})
-    queryReturnCode=sshdb.insertQuery(conn, users)
+    users = ({"key": sshfile, "role": theRole, "keySum": checksum,
+    "path": keypath, "realname": theName})
+    queryReturnCode = sshdb.insertQuery(conn, users)
     if queryReturnCode == 0:
         sys.stdout.write("Commited key successful in the database\n")
     elif queryReturnCode == 42:

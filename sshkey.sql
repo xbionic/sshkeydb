@@ -43,7 +43,7 @@ SET default_with_oids = false;
 --
 
 CREATE TABLE users (
-    keyfile character varying(2500) NOT NULL,
+    keyfile character varying NOT NULL,
     role character varying NOT NULL,
     checksum character varying(100) NOT NULL,
     keypath character varying(500),
