@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Michael Dierks (michael dierks at gmail dot com)
+# Copyright (C) 2011 Michael Dierks (michael dot dierks at gmail dot com)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 2
@@ -54,8 +54,8 @@ def parseConfig():
     dbport = config.get('postgresql', 'port')
     if dbpass == 'EDITTHIS':
         return 1
-    connectingString = "dbname=%s user=%s password=%s host=%s port=5432"
-    % (databasename, dbuser, dbpass, dbhost)
+    connectingString = "dbname=%s user=%s password=%s host=%s port=5432" % \
+    (databasename, dbuser, dbpass, dbhost)
     return connectingString
 
 
@@ -93,8 +93,8 @@ def insertQuery(conn, users):
     """
     cursor = conn.cursor()
     try:
-        myQuery =
-        "insert into users values('%(key)s', '%(role)s', '%(keySum)s',
+        myQuery = \
+        "insert into users values('%(key)s', '%(role)s', '%(keySum)s', \
         '%(path)s', '%(realname)s')" % users
         cursor.execute(myQuery)
         conn.commit()
@@ -124,7 +124,7 @@ def genList():
     """
     Returns a list of keys
     """
-    auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'r')
+    auth = open(os.path.expanduser('~/.ssh/authorized_keys'), 'r')
     n = []
     for i in auth:
         n.append(i)

@@ -1,1 +1,2 @@
 Currently exists no check for duplicate keys in the authorized_keys2 file. (working on a solution)
+if authorized_keys not exists the code crashs (workaround touch key)

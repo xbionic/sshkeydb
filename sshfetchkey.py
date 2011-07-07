@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Michael Dierks (michael dierks at gmail dot com)
+# Copyright (C) 2011 Michael Dierks (michael dot dierks at gmail dot com)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 2
@@ -30,7 +30,7 @@ import argparse
 def main():
     configPresent = sshdb.configCheck()
     if configPresent != 0:
-        sys.exit("No configfile found, please use
+        sys.exit("No configfile found, please use \
         sshdbconfig.py to create a default config")
     # parse config und connect
     connectingString = sshdb.parseConfig()
@@ -54,18 +54,21 @@ def main():
         keyList = sshdb.genList()
         cursor = conn.cursor()
         if theName == '':
-            getByRole = "select role, realname, keyfile, keypath,
-            checksum from users where role = '%s'" % theRole
+            getByRole = \
+            "select role, realname, keyfile, keypath, checksum from \
+            users where role = '%s'" % theRole
             cursor.execute(getByRole)
         else:
-            getByName = "select role, realname, keyfile, keypath,
-            checksum from users where realname = '%s'" % theName
+            getByName = \
+            "select role, realname, keyfile, keypath, checksum from \
+            users where realname = '%s'" % theName
             cursor.execute(getByName)
         myresults = cursor.fetchall()
         for key in myresults:
             getKey = key[2]
+            """ checking if the key exists in the authorized_keys """
             try:
-                foo = keyList.index(key[2])
+                keyList.index(key[2])
             except ValueError:
                 keychecksum = hashlib.sha256(getKey).hexdigest()
                 if key[4] == keychecksum:
@@ -73,10 +76,9 @@ def main():
                 else:
                     print "Checksum is different"
                     sys.exit("Aborting")
-                auth = open(os.path.expanduser('~/.ssh/authorized_keys2'), 'a')
+                auth = open(os.path.expanduser('~/.ssh/authorized_keys'), 'a')
                 auth.write(key[2])
                 auth.close()
-                print "here we go"
             except:
                 pass
     except:

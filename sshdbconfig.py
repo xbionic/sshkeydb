@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Michael Dierks (michael dierks at gmail dot com)
+# Copyright (C) 2011 Michael Dierks (michael dot dierks at gmail dot com)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 2

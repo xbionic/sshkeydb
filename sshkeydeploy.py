@@ -30,7 +30,8 @@ import sshdb
 def main():
     configPresent = sshdb.configCheck()
     if configPresent != 0:
-        sys.exit("No configfile found, please use sshdbconfig.py
+        sys.exit(
+        "No configfile found, please use sshdbconfig.py \
         to create a default config")
 
     # parse config und connect
