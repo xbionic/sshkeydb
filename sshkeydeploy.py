@@ -21,11 +21,10 @@
 import sys
 import os
 import hashlib
-import psycopg2
 import ConfigParser
 import argparse
 import sshdb
-
+import MySQLdb
 
 def main():
     configPresent = sshdb.configCheck()
@@ -36,9 +35,15 @@ def main():
 
     # parse config und connect
     connectingString = sshdb.parseConfig()
-    if connectingString == 1:
+    whichdb = connectingString[0]
+    if whichdb == 1:
         sys.exit("Please edit your configfile")
-    conn = sshdb.connectDB(connectingString)
+
+    if whichdb == 'postgresql':
+        conn = sshdb.connectpsql(connectingString[1])
+
+    if whichdb == 'mysql':
+        conn = MySQLdb.connect(db="sshkey", read_default_file="~/my.cnf")
 
     # Searching for the ssh key using the default keys
 
@@ -70,15 +75,16 @@ def main():
     if checkKey == 0:
         print "Key is OK"
     else:
-        sys.exit("Key is no SSH-Key. I am stopping here")
+        sys.exit("Key is no publickey. I am stopping here")
 
     #Check if the key exists, make a checksum and read it
     hashSHA256 = sshdb.makeSHA256Hash(keypath)
-    (checksum, sshfile) = hashSHA256
-    cursor = conn.cursor
-    users = ({"key": sshfile, "role": theRole, "keySum": checksum,
+    if hashSHA256[0] == 1:
+        sys.stdout.write("Key not found in %s" % keypath)
+    users = ({"key": hashSHA256[1], "role": theRole, "keySum": hashSHA256[0], \
     "path": keypath, "realname": theName})
-    queryReturnCode = sshdb.insertQuery(conn, users)
+    theQuery = sshdb.myQuery(users)
+    queryReturnCode = sshdb.insertQuery(conn, theQuery)
     if queryReturnCode == 0:
         sys.stdout.write("Commited key successful in the database\n")
     elif queryReturnCode == 42:

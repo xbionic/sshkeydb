@@ -21,11 +21,11 @@
 import sys
 import os
 import hashlib
-import psycopg2
-import ConfigParser
 import sshdb
 import argparse
+import MySQLdb
 
+global myresults
 
 def main():
     configPresent = sshdb.configCheck()
@@ -34,9 +34,13 @@ def main():
         sshdbconfig.py to create a default config")
     # parse config und connect
     connectingString = sshdb.parseConfig()
-    if connectingString == 1:
+    if connectingString[0] == 1:
         sys.exit("Please edit your configfile")
-    conn = sshdb.connectDB(connectingString)
+    if connectingString[0] == 'postgresql':
+        conn = sshdb.connectpsql(connectingString[1])
+    if connectingString[0] == 'mysql':
+        conn = MySQLdb.connect(db="sshkey", read_default_file="~/my.cnf")
+
 
     try:
         parser = argparse.ArgumentParser()
@@ -56,14 +60,16 @@ def main():
         if theName == '':
             getByRole = \
             "select role, realname, keyfile, keypath, checksum from \
-            users where role = '%s'" % theRole
+            users where role = '%s';" % theRole
             cursor.execute(getByRole)
+            myresults = cursor.fetchall()
         else:
             getByName = \
             "select role, realname, keyfile, keypath, checksum from \
-            users where realname = '%s'" % theName
+            users where realname = '%s';" % theName
             cursor.execute(getByName)
-        myresults = cursor.fetchall()
+            myresults = cursor.fetchall()
+            """ Dirty hack with the exception ValueError need a better solution """
         for key in myresults:
             getKey = key[2]
             """ checking if the key exists in the authorized_keys """
@@ -72,7 +78,7 @@ def main():
             except ValueError:
                 keychecksum = hashlib.sha256(getKey).hexdigest()
                 if key[4] == keychecksum:
-                    print "Checksum ok"
+                    print "Checksum ok for %s" % key[3]
                 else:
                     print "Checksum is different"
                     sys.exit("Aborting")
@@ -80,11 +86,11 @@ def main():
                 auth.write(key[2])
                 auth.close()
             except:
-                pass
+                print "please check if the file ~/.ssh/authorized_keys is present" 
     except:
         print "Database Error"
-    conn.close()
-    sys.exit()
+#    conn.close()
+#    sys.exit()
 
 if __name__ == '__main__':
     main()
