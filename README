@@ -1,1 +1,21 @@
 This programm allows an administrator to add many ssh-publickeys to the authorized_keys file at once.
+
+Requirements to run the programm:
+
+Python modules:
+	install argparse
+	install ConfigParser
+	install hashlib
+	for Postgresql you need the modul psycopg2 (should be shipped with your distro)
+	for MySQL you need the modul MySQLdb (should be shipped with your distro)
+
+
+Databases:
+
+PostgreSQL:
+	create a database with the sshkey_pg.sql file and please use a password
+
+MySQL:
+	create a database with the sshkey_mysql.sql file and please use a password
+
+If you use sshfetchkey the first time test if the file exists (~/.ssh/authorized_keys)

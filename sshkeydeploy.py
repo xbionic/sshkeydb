@@ -26,6 +26,7 @@ import argparse
 import sshdb
 import MySQLdb
 
+
 def main():
     configPresent = sshdb.configCheck()
     if configPresent != 0:
@@ -43,7 +44,7 @@ def main():
         conn = sshdb.connectpsql(connectingString[1])
 
     if whichdb == 'mysql':
-        conn = MySQLdb.connect(db="sshkey", read_default_file="~/my.cnf")
+        conn = MySQLdb.connect(read_default_file="~/sshkeydb.conf")
 
     # Searching for the ssh key using the default keys
 

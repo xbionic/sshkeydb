@@ -23,7 +23,7 @@ import ConfigParser
 import sshdb
 
 
-def main:
+def main():
         FileCheck = sshdb.configCheck()
         if FileCheck == 1:
             sshdb.createConfigFile()

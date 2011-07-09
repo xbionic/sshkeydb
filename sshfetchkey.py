@@ -23,9 +23,9 @@ import os
 import hashlib
 import sshdb
 import argparse
-import MySQLdb
 
 global myresults
+
 
 def main():
     configPresent = sshdb.configCheck()
@@ -39,8 +39,8 @@ def main():
     if connectingString[0] == 'postgresql':
         conn = sshdb.connectpsql(connectingString[1])
     if connectingString[0] == 'mysql':
-        conn = MySQLdb.connect(db="sshkey", read_default_file="~/my.cnf")
-
+        import MySQLdb
+        conn = MySQLdb.connect(read_default_file="~/sshkeydb.conf")
 
     try:
         parser = argparse.ArgumentParser()
@@ -69,12 +69,15 @@ def main():
             users where realname = '%s';" % theName
             cursor.execute(getByName)
             myresults = cursor.fetchall()
-            """ Dirty hack with the exception ValueError need a better solution """
+            """
+            Dirty hack with the exception ValueError need a better solution
+            """
         for key in myresults:
             getKey = key[2]
             """ checking if the key exists in the authorized_keys """
             try:
                 keyList.index(key[2])
+                print "Key exists in authorized_keys: %s" % key[3]
             except ValueError:
                 keychecksum = hashlib.sha256(getKey).hexdigest()
                 if key[4] == keychecksum:
@@ -86,11 +89,12 @@ def main():
                 auth.write(key[2])
                 auth.close()
             except:
-                print "please check if the file ~/.ssh/authorized_keys is present" 
+                print "please check if the file ~/.ssh/authorized_keys \
+                is present"
     except:
         print "Database Error"
-#    conn.close()
-#    sys.exit()
+    conn.close()
+    sys.exit()
 
 if __name__ == '__main__':
     main()

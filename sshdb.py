@@ -22,8 +22,12 @@ import ConfigParser
 import hashlib
 import sys
 import os
-import psycopg2
 import re
+import MySQLdb
+import psycopg2
+
+pathToConfig = "~/sshkeydb.conf"
+config = ConfigParser.RawConfigParser()
 
 
 def configCheck():
@@ -31,10 +35,8 @@ def configCheck():
     Returns 1 if not present
     Returns 0 if present
     """
-    config = ConfigParser.RawConfigParser()
-    checkconf = os.path.exists(os.path.expanduser('~/.sshkeydb.conf'))
+    checkconf = os.path.exists(os.path.expanduser(pathToConfig))
     if checkconf == False:
-        print "Configfile not found please create a defaultconf"
         return 1
     else:
         return 0
@@ -43,63 +45,88 @@ def configCheck():
 def parseConfig():
     """
     Returns a connectionstring or
-    if the keyword EDITTHIS is found a 1
+    if the keyword EDITTHIS is found a 1 (postgresql)
+    For mysql use the my.cnf file for the connection
     """
-    config = ConfigParser.RawConfigParser()
-    config.read([os.path.expanduser('~/.sshkeydb.conf')])
-    databasename = config.get('postgresql', 'database')
-    dbuser = config.get('postgresql', 'user')
-    dbhost = config.get('postgresql', 'host')
-    dbpass = config.get('postgresql', 'password')
-    dbport = config.get('postgresql', 'port')
-    if dbpass == 'EDITTHIS':
-        return 1
-    connectingString = "dbname=%s user=%s password=%s host=%s port=5432" % \
-    (databasename, dbuser, dbpass, dbhost)
-    return connectingString
+    fetchConfig = []
+    config.read([os.path.expanduser(pathToConfig)])
+    wantedDB = config.get('db', 'wanteddb')
+    if wantedDB == 'postgresql':
+            databasename = config.get('postgresql', 'database')
+            dbuser = config.get('postgresql', 'user')
+            dbhost = config.get('postgresql', 'host')
+            dbpass = config.get('postgresql', 'password')
+            if dbpass == 'EDITTHIS':
+                return 1
+            dbport = config.get('postgresql', 'port')
+            connectingString = "dbname=%s user=%s password=%s host=%s \
+            port=%s" % (databasename, dbuser, dbpass, dbhost, dbport)
+            fetchConfig.append(wantedDB)
+            fetchConfig.append(connectingString)
+            return fetchConfig
+    if wantedDB == 'mysql':
+            fetchConfig.append(wantedDB)
+            return fetchConfig 
 
 
-def connectDB(connectingString):
+def connectpsql(connectingString):
     """
-    Returns a connection object or
-    1 if the connecting fails
+    Returns a connection object or 1 if the connecting fails
     """
     try:
         conn = psycopg2.connect(connectingString)
         return conn
     except psycopg2.OperationalError:
         print("Could not connect to the server"),
-        return 1
+        return 1 
+
+
+def connectMySql( connectingString):
+    """
+    Returns a connection object or 1 if the connecting fails
+    """
+    mysqldb=MySQLdb.connect(connectingString)
+    return mysqldb
 
 
 def makeSHA256Hash(n):
     """
     makeSHA256Hash(fileLocation)
-    Returns a SHA256 hash of the file and a string
+    Returns a SHA256 hash of the file and a string as list
     """
+    hashValue = []
     try:
         keyssh = open(n, 'r')
         readFile = keyssh.read()
         keychecksum = hashlib.sha256(readFile).hexdigest()
-        return keychecksum, readFile
+        hashValue.append(keychecksum)
+        hashValue.append(readFile)
+        return hashValue
     except IOError:
         print("File not found in %s") % n
-        return 1
+        hashValue.append(1)
+        return hashValue
 
 
-def insertQuery(conn, users):
+def myQuery(users):
+        myQuery = \
+        "insert into users values('%(key)s', '%(role)s', '%(keySum)s', \
+        '%(path)s', '%(realname)s');" % users
+        return myQuery
+
+
+def insertQuery(conn, queryString):
     """
-    Need 2 arguments a connectionobject and a dict
+    Need 2 arguments a connectionobject and a string
     """
     cursor = conn.cursor()
     try:
-        myQuery = \
-        "insert into users values('%(key)s', '%(role)s', '%(keySum)s', \
-        '%(path)s', '%(realname)s')" % users
-        cursor.execute(myQuery)
+        cursor.execute(queryString)
         conn.commit()
         return 0
     except psycopg2.IntegrityError:
+        return 42
+    except:
         return 42
 
 
@@ -133,16 +160,23 @@ def genList():
 
 
 def createConfigFile():
-    """ Creates a default config file ~/.sshkeydb.conf """
+    """ Creates a default config file ~/sshkeydb.conf """
     config = ConfigParser.RawConfigParser()
+    config.add_section('db')
+    config.set('db', 'wanteddb', 'postgresql')
     config.add_section('postgresql')
     config.set('postgresql', 'database', 'sshkey')
     config.set('postgresql', 'user', os.getenv('USER'))
     config.set('postgresql', 'password', 'EDITTHIS')
     config.set('postgresql', 'host', 'localhost')
     config.set('postgresql', 'port', '5432')
+    config.add_section('client')
+    config.set('client', 'database', 'sshkey')
+    config.set('client', 'user', os.getenv('USER'))
+    config.set('client', 'password', 'EDITTHIS')
+    config.set('client', 'host', 'localhost')
     try:
-        with open(os.path.expanduser('~/.sshkeydb.conf'), 'wb') as configfile:
+        with open(os.path.expanduser(pathToConfig), 'wb') as configfile:
             config.write(configfile)
         return 0
     except:
@@ -157,8 +191,8 @@ def isPublicKey(keypath):
     """
     key = open(keypath, 'r')
     readFile = key.read()
-    matchkey = re.search
-    ('^(ecdsa-sha2-nistp(p256|p384|p521)|ssh-(rsa|dsa))', readFile)
+    matchkey = \
+    re.search('^(ecdsa-sha2-nistp(p256|p384|p521)|ssh-(rsa|dsa))', readFile)
     if matchkey == None:
         return 1
     else:
