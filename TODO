@@ -1,5 +1,11 @@
 need auth for the deployment
 use a configfile (done)
-use classes for the single tasks
 write a client for the database to retrieve keys and add them to the auth-file (done)
 more database support like noSQL (mongodb, couchdb) and SQL(mySQL, postgreSQL)
+add function to set a key active/inactive
+add new table which keys are revoked
+
+
+planned with django
+Display all keys on a website
+database control
