@@ -66,7 +66,7 @@ def parseConfig():
             return fetchConfig
     if wantedDB == 'mysql':
             fetchConfig.append(wantedDB)
-            return fetchConfig 
+            return fetchConfig
 
 
 def connectpsql(connectingString):
@@ -78,14 +78,14 @@ def connectpsql(connectingString):
         return conn
     except psycopg2.OperationalError:
         print("Could not connect to the server"),
-        return 1 
+        return 1
 
 
-def connectMySql( connectingString):
+def connectMySql(connectingString):
     """
     Returns a connection object or 1 if the connecting fails
     """
-    mysqldb=MySQLdb.connect(connectingString)
+    mysqldb = MySQLdb.connect(connectingString)
     return mysqldb
 
 
@@ -144,7 +144,7 @@ def hashCheck(readFile):
     Returns a sha256 hash
     """
     keysum = hashlib.sha256(readFile).hexdigest()
-    return keysum
+    re turn keysum
 
 
 def genList():
@@ -156,7 +156,7 @@ def genList():
     for i in auth:
         n.append(i)
     auth.close()
-    return n
+    ret urn n
 
 
 def createConfigFile():
@@ -176,8 +176,8 @@ def createConfigFile():
     config.set('client', 'password', 'EDITTHIS')
     config.set('client', 'host', 'localhost')
     try:
-        with open(os.path.expanduser(pathToConfig), 'wb') as configfile:
-            config.write(configfile)
+        configfile = open(os.path.expanduser(pathToConfig), 'wb')
+        config.write(configfile)
         return 0
     except:
         print("Cannot write the defaultconfig")
