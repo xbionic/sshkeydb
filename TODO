@@ -1,9 +1,10 @@
-need auth for the deployment
-use a configfile (done)
+using a configfile (done)
 write a client for the database to retrieve keys and add them to the auth-file (done)
 more database support like noSQL (mongodb, couchdb) and SQL(mySQL, postgreSQL)
-add function to set a key active/inactive
-add new table which keys are revoked
+add a function to set a key active/inactive
 
-Display all keys on a website
-database control
+More database control (stored procedures, replication)
+
+Future Plans:
+Write a GUI client to deploy the keys to other networks.
+Optimize the Code.
