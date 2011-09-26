@@ -144,7 +144,7 @@ def hashCheck(readFile):
     Returns a sha256 hash
     """
     keysum = hashlib.sha256(readFile).hexdigest()
-    re turn keysum
+    return keysum
 
 
 def genList():
@@ -156,7 +156,7 @@ def genList():
     for i in auth:
         n.append(i)
     auth.close()
-    ret urn n
+    return n
 
 
 def createConfigFile():

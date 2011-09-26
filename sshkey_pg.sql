@@ -42,11 +42,13 @@ SET default_with_oids = false;
 --
 
 CREATE TABLE users (
-    keyfile character varying NOT NULL,
-    role character varying NOT NULL,
+    keyfile character varying,
+    role character varying NOT NULL default user,
     checksum character varying(100) NOT NULL,
-    keypath character varying(500),
-    realname character varying(100)
+    keypath character varying(500) not null,
+    realname character varying(100) not null,
+    active boolean default TRUE not NULL,
+    uploadhost inet
 );
 --
 -- Name: users_keyfile_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
