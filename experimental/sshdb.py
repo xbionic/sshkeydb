@@ -31,8 +31,8 @@ config = ConfigParser.RawConfigParser()
 
 class sshdb(object):
         def __init__(self, name="sshdb", \
-                    role="admin", \
-                    keypath='~/.ssh/id_dsa.pub'):
+                role="admin", \
+                keypath='~/.ssh/id_dsa.pub'):
                 self.name = name
                 self.role = role
                 self.keypath = keypath
@@ -55,7 +55,7 @@ class sshdb(object):
             mysqldb = MySQLdb.connect(connectingString)
             return mysqldb
 
-        def makeSHA256Hash(self, keypath='~/.ssh/id_rsa.pub'):
+        def  makeSHA256Hash(self, keypath='~/.ssh/id_rsa.pub'):
             """
             makeSHA256Hash(fileLocation)
             Returns a SHA256 hash of the file and a string as list
@@ -136,66 +136,66 @@ class sshdb(object):
             else:
                 return 0
 
-    def configCheck(self):
-        """
-        Checks if the configfile ist present
-        Returns 1 if not present
-        Returns 0 if present
-        """
-        checkconf = os.path.exists(os.path.expanduser(pathToConfig))
-        print checkconf
-        if checkconf == False:
-            raise File_not_found("File not found"")
-            return 1
-        else:
-            return 0
-
-    def parseConfig(self):
-        """
-        Returns a connectionstring or
-        if the keyword EDITTHIS is found a 1 (postgresql)
-        For mysql use the my.cnf file for the connection
-        """
-        fetchConfig = []
-        config.read([os.path.expanduser(pathToConfig)])
-        wantedDB = config.get('db', 'wanteddb')
-        if wantedDB == 'postgresql':
-            databasename = config.get('postgresql', 'database')
-            dbuser = config.get('postgresql', 'user')
-            dbhost = config.get('postgresql', 'host')
-            dbpass = config.get('postgresql', 'password')
-            if dbpass == 'EDITTHIS':
+        def configCheck(self):
+            """
+            Checks if the configfile ist present
+            Returns 1 if not present
+            Returns 0 if present
+            """
+            checkconf = os.path.exists(os.path.expanduser(pathToConfig))
+            print checkconf
+            if checkconf == False:
+                raise File_not_found("File not found")
                 return 1
-            dbport = config.get('postgresql', 'port')
-            connectingString = "dbname=%s user=%s password=%s host=%s \
-            port=%s" % (databasename, dbuser, dbpass, dbhost, dbport)
-            fetchConfig.append(wantedDB)
-            fetchConfig.append(connectingString)
-            return fetchConfig
-        if wantedDB == 'mysql':
-            fetchConfig.append(wantedDB)
-            return fetchConfig
+            else:
+                return 0
 
-    def createConfigFile(self):
-        """ Creates a default config file ~/sshkeydb.conf """
-        config = ConfigParser.RawConfigParser()
-        config.add_section('db')
-        config.set('db', 'wanteddb', 'postgresql')
-        config.add_section('postgresql')
-        config.set('postgresql', 'database', 'sshkey')
-        config.set('postgresql', 'user', os.getenv('USER'))
-        config.set('postgresql', 'password', 'EDITTHIS')
-        config.set('postgresql', 'host', 'localhost')
-        config.set('postgresql', 'port', '5432')
-        config.add_section('client')
-        config.set('client', 'database', 'sshkey')
-        config.set('client', 'user', os.getenv('USER'))
-        config.set('client', 'password', 'EDITTHIS')
-        config.set('client', 'host', 'localhost')
-        try:
-            configfile = open(os.path.expanduser(pathToConfig), 'wb')
-            config.write(configfile)
-            return 0
-        except:
-            print("Cannot write the defaultconfig")
-            return 1
+        def parseConfig(self):
+            """
+            Returns a connectionstring or
+            if the keyword EDITTHIS is found a 1 (postgresql)
+            For mysql use the my.cnf file for the connection
+            """
+            fetchConfig = []
+            config.read([os.path.expanduser(pathToConfig)])
+            wantedDB = config.get('db', 'wanteddb')
+            if wantedDB == 'postgresql':
+                databasename = config.get('postgresql', 'database')
+                dbuser = config.get('postgresql', 'user')
+                dbhost = config.get('postgresql', 'host')
+                dbpass = config.get('postgresql', 'password')
+                if dbpass == 'EDITTHIS':
+                    return 1
+                dbport = config.get('postgresql', 'port')
+                connectingString = "dbname=%s user=%s password=%s host=%s \
+                port=%s" % (databasename, dbuser, dbpass, dbhost, dbport)
+                fetchConfig.append(wantedDB)
+                fetchConfig.append(connectingString)
+                return fetchConfig
+            if wantedDB == 'mysql':
+                fetchConfig.append(wantedDB)
+                return fetchConfig
+
+        def createConfigFile(self):
+            """ Creates a default config file ~/sshkeydb.conf """
+            config = ConfigParser.RawConfigParser()
+            config.add_section('db')
+            config.set('db', 'wanteddb', 'postgresql')
+            config.add_section('postgresql')
+            config.set('postgresql', 'database', 'sshkey')
+            config.set('postgresql', 'user', os.getenv('USER'))
+            config.set('postgresql', 'password', 'EDITTHIS')
+            config.set('postgresql', 'host', 'localhost')
+            config.set('postgresql', 'port', '5432')
+            config.add_section('client')
+            config.set('client', 'database', 'sshkey')
+            config.set('client', 'user', os.getenv('USER'))
+            config.set('client', 'password', 'EDITTHIS')
+            config.set('client', 'host', 'localhost')
+            try:
+                configfile = open(os.path.expanduser(pathToConfig), 'wb')
+                config.write(configfile)
+                return 0
+            except:
+                print("Cannot write the defaultconfig")
+                return 1
