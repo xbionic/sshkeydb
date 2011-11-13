@@ -8,3 +8,4 @@ More database control (stored procedures, replication)
 Future Plans:
 Write a GUI client to deploy the keys to other networks.
 Optimize the Code.
+Find the strength of the key and type (ssh-keygen -l -f .ssh/thekey.pub)
